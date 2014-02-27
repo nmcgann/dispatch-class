@@ -1,7 +1,7 @@
 # Dispatch - Experimental Class Version
 
 This is an experimental version of Dispatch converted to class-based to improve
-testability. A procedural facade is also impemented so it can be used in exactly the
+testability. A procedural facade is also implemented so it can be used in exactly the
 same way as normal Dispatch.
 
 A few enhancements are included e.g. a class autoloader. Just because.
@@ -24,7 +24,7 @@ Dispatch is written by [Jesus A. Domingo].
 
 ## Credits and Contributors
 
-This experimental class-based version converted from the original by [Neil McGann]
+This experimental class-based version converted from the original by Neil McGann
 
 * nmcgann [nmcgann](https://github.com/nmcgann)
 
