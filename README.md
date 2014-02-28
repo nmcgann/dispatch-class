@@ -6,7 +6,7 @@ same way as normal Dispatch.
 
 A few enhancements are included e.g. a class autoloader. Just because.
 
-*This is hacked code intended as proof-of-principle. Yes, it's ugly - I know.*
+**This is hacked code intended as proof-of-principle. Yes, it's ugly - I know.**
 
 The test sub directory has some very crude tests done with an adaptation of
 the test class from Fat Free Framework. These are also a proof-of-principle

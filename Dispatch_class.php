@@ -1281,7 +1281,9 @@ class Dispatch extends Singleton {
 abstract class Singleton
 {
   //array of instances. Set as protected rather than private so can be
-  //accessed in testing (e.g. to force an object to be re-created)
+  //accessed in testing (e.g. to force all objects to be re-created)
+  //(also see _reset() function which is specific and allows the easy reset of
+  // a single instance)
   protected static $instances;
 
   /**
@@ -1305,7 +1307,7 @@ abstract class Singleton
    * 
    * @return
    */
-  public static function instance() {
+  final public static function instance() {
     $c = get_called_class();
     
     if (!isset(self::$instances[$c])) {
@@ -1318,12 +1320,36 @@ abstract class Singleton
   }
 
   /**
+   * SSingleton::get_instance()
+   * 
+   * @return
+   */
+  final public static function get_instance() {
+    //synonym for instance()
+    return self::instance();
+  }
+
+  /**
    * Singleton::__clone()
    * 
    * @return void
    */
-  public function __clone() {
+  final public function __clone() {    
     trigger_error ('You can not clone a singleton.',E_USER_ERROR);
+  }
+  
+  /**
+   * Singleton::_reset()
+   * 
+   * Special function to reset the instance so it can easily be tested
+   * as the next call to instance() will create a brand new object. 
+   * 
+   * @return void
+   */
+  final public function _reset(){    
+    $c = get_called_class();
+    self::$instances[$c] = null;
+
   }
   
 } //EOC
