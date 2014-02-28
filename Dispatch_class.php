@@ -68,6 +68,10 @@ function template(){
   
   return call_user_func_array(array(Dispatch::instance(),'template'),func_get_args());
 }
+function content(){
+  
+  return call_user_func_array(array(Dispatch::instance(),'content'),func_get_args());
+}
 function partial(){
   
   return call_user_func_array(array(Dispatch::instance(),'partial'),func_get_args());
