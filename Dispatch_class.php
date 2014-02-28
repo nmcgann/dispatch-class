@@ -76,6 +76,10 @@ function partial(){
   
   return call_user_func_array(array(Dispatch::instance(),'partial'),func_get_args());
 }
+function inline(){
+  
+  return call_user_func_array(array(Dispatch::instance(),'inline'),func_get_args());
+}
 function json(){
   
   return call_user_func_array(array(Dispatch::instance(),'json'),func_get_args());
@@ -842,8 +846,9 @@ class Dispatch extends Singleton {
    */
   public function inline($file, $locals = array(), $layout = 'layout') {
     $locals = is_callable($locals) ? $locals() : $locals;
-    return function () use ($file, $locals, $layout) {
-      $this->render($file, $locals, $layout);
+    $obj = $this;
+    return function () use ($obj,$file, $locals, $layout) {
+      $obj->render($file, $locals, $layout);
     };
   }
   
