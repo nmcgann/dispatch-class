@@ -13,7 +13,8 @@
  * - Singleton only via extending Singleton class and using ::instance() to create.
  * - Static variables in functions moved out into private properties.
  * - Improved routing params with regexes and optional sections.
- * - Autoloader added. (dispatch.plugins and dispatch.autoload are the 2 extra paths)
+ * - Autoloader added if dispatch.autoload == true. 
+ * - (dispatch.plugin_paths and dispatch.autoload_paths are the 2 extra paths)
  * - dispatch.request in configs has lots of routing params (GET/POST etc.)
  * - When dispatch.url not set auto detection of path is improved.
  * 
@@ -153,17 +154,45 @@ function dispatch(){
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
      
+/**
+ * Dispatch
+ * 
+ * Dispatch as a class.
+ * 
+ * @package dispatch-class
+ * @author Neil McGann
+ * @copyright 2014
+ * @version $Id$
+ * @access public
+ * 
+ */
 class Dispatch extends Singleton {
     
-  public function __construct() {
+  /**
+   * Dispatch::__construct()
+   * 
+   * Constructor loads up any config items set and optionally loads our own autoloader.
+   * Calls the parent class constructor which simply enforces the singleton.
+   * 
+   * @param mixed $config
+   * @return void
+   */
+  public function __construct($config = null) {
     
     parent::__construct();
+
+    if(is_array($config) && !empty($config)){
       
-    // Register autoloader
-    spl_autoload_register(array($this,'autoload'));
+      if(isset($config['dispatch.autoload']) && $config['dispatch.autoload'] === true) {
+  
+        spl_autoload_register(array($this,'autoload')); // Register our autoloader
+      }
+      //load up any other config items
+      $this->config($config);
+    }
       
   }
-  
+    
   ///////////////////////////////////////////////////////////////////////////////
   // Standard code below modified to live in a class.
   // Static vars have been moved out of functions and created as protected properties
@@ -1214,9 +1243,9 @@ class Dispatch extends Singleton {
       'path' => $path, 
       'base' => $base,
       'host' => $_SERVER['SERVER_NAME'],
-      'scheme' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on' ||
-            ($this->request_headers('X-Forwarded-Proto')=='https')?'https':'http',
-      'ajax' =>   $this->request_headers('X-Requested-With') &&
+      'scheme' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ||
+            ($this->request_headers('X-Forwarded-Proto') == 'https') ? 'https' : 'http',
+      'ajax' => $this->request_headers('X-Requested-With') &&
             $this->request_headers('X-Requested-With') == 'XMLHttpRequest'
       ));
 // ----------------------------------------------------------------------------
@@ -1239,13 +1268,13 @@ class Dispatch extends Singleton {
    
     $class = $this->fixslashes(ltrim($class,'\\'));
     
-    foreach($this->split($this->config('dispatch.plugins')
-                .';'.$this->config('dispatch.autoload')) as $auto)
+    foreach($this->split($this->config('dispatch.plugin_paths')
+                .';'.$this->config('dispatch.autoload_paths')) as $path)
     {
       //run through the directory list trying the 3 upper/lower case options
-      if (is_file($file = $auto.$class.'.php') ||
-        is_file($file = $auto.strtolower($class).'.php') ||
-        is_file($file = strtolower($auto.$class).'.php'))
+      if (is_file($file = $path.$class.'.php') ||
+        is_file($file = $path.strtolower($class).'.php') ||
+        is_file($file = strtolower($path.$class).'.php'))
       {
         return require($file);
       }
