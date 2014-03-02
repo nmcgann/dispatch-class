@@ -1169,68 +1169,98 @@ class Dispatch extends Singleton {
         
       return;
     }
-  
-    // setup method and rexp for dispatch
-    $method = strtoupper($method);
-  
-    // cache miss, do a lookup
-    $finder = function ($routes, $path) {
-      $found = false;
-      foreach ($routes as $regexp => $callback) {
-        if (preg_match($regexp, $path, $values))
-          return array($regexp, $callback, $values);
+
+    //Carry out routing when routes not being added
+    if($callback === null) {
+      // setup method and rexp for dispatch
+      $method = strtoupper($method);
+    
+      // cache miss, do a lookup
+      $finder = function ($routes, $path) {
+        $found = false;
+        foreach ($routes as $regexp => $callback) {
+          if (preg_match($regexp, $path, $values))
+            return array($regexp, $callback, $values);
+        }
+        return array(null, null, null);
+      };
+    
+      // lookup a matching route
+      if (isset($this->on_routes[$method]))
+      {
+        list($regexp, $callback, $values) = $finder($this->on_routes[$method], $path);
       }
-      return array(null, null, null);
-    };
-  
-    // lookup a matching route
-    if (isset($this->on_routes[$method]))
-    {
-      list($regexp, $callback, $values) = $finder($this->on_routes[$method], $path);
-    }
-    
-    // if no match, try the any-method handlers
-    if (!$regexp && isset($this->on_routes['*']))
-    {
-        list($regexp, $callback, $values) = $finder($this->on_routes['*'], $path);
-    }
-    
-    // we got a match
-    if ($regexp) 
-    {
-        // construct the params for the callback
-        $tokens = array_filter(array_keys($values), 'is_string');
-        $values = array_map('urldecode', array_intersect_key(
-          $values,
-          array_flip($tokens)
-        ));
-    
-        // setup + dispatch
-        ob_start();
-        $this->params($values);
-        $this->filter($values);
-        $this->before($method, "@{$path}");
+      
+      // if no match, try the any-method handlers
+      if (!$regexp && isset($this->on_routes['*']))
+      {
+          list($regexp, $callback, $values) = $finder($this->on_routes['*'], $path);
+      }
+      
+      // we got a match
+      if ($regexp) 
+      {
+          // construct the params for the callback
+          $tokens = array_filter(array_keys($values), 'is_string');
+          $values = array_map('urldecode', array_intersect_key(
+            $values,
+            array_flip($tokens)
+          ));
+      
+          // setup + dispatch
+          ob_start();
+          $this->params($values);
+          $this->filter($values);
+          $this->before($method, "@{$path}");
 
-        //adjust $values array to suit the number of args that the callback is expecting
-        //padding is added to the array with null elements having numeric keys starting from zero.
-        //stops error if optional args don't match the number of parameters.
-        $ref = new ReflectionFunction($callback);
-        $num_args_expected = $ref->getNumberOfParameters();
-        //append filler array. (note: can't call array_fill with zero quantity - throws error)
-        $values += (($diff = $num_args_expected - count($values)) > 0) ? array_fill(0,$diff,null) : array();
+          if(!is_array($callback)) {
+            //normal function or closure
+            $ref = new ReflectionFunction($callback);
+          }
+          else {
+            //class and method - further investigation required
+            $refclass = new ReflectionClass($callback[0]);
+            //need to check if class can be instantiated to trap things like abstract classes 
+            //(the check with is_callable() does not reject them)
+            if ($refclass->isInstantiable()) {
+               
+              $constructor = $refclass->getConstructor();
+              //check for required parameters in constructor - not permitted!
+              if(!is_null($constructor) && $constructor->getNumberOfRequiredParameters()) {
+                //error out and don't come back
+                trigger_error("Class $callback[0] constructor cannot have required parameters.",E_USER_ERROR);
+              }
+              //create instance of class (with no constructor parameters if a constructor is present)
+              $obj = $refclass->newInstance();
+              //get method
+              $ref = $refclass->getMethod($callback[1]);
+              
+              //re-write $callback to countain class and method of new object created
+              $callback = array($obj, $callback[1]);
+            }
+            else {
+              //class is not instantiable - fatal error (catches things that slip through is_callable())
+              trigger_error ("Cannot create class $callback[0] to route to.",E_USER_ERROR);
+            }
+          }
+          
+          //adjust $values array to suit the number of args that the callback is expecting
+          $num_args_expected = $ref->getNumberOfParameters();
+          //append filler array. (note: can't call array_fill with zero quantity - throws error)
+          $values += (($diff = $num_args_expected - count($values)) > 0) ? array_fill(0,$diff,null) : array();
 
-        call_user_func_array($callback, array_values($this->bind($values)));
-        $this->after($method, $path);
-        $buff = ob_get_clean();
-    
-        if ($method !== 'HEAD')
-          echo $buff;
-    
-      } else {
-        // nothing, so just 404
-        $this->error(404, 'Page not found');
-    }
-    
+          call_user_func_array($callback, array_values($this->bind($values)));
+          $this->after($method, $path);
+          $buff = ob_get_clean();
+      
+          if ($method !== 'HEAD')
+            echo $buff;
+      
+        } else {
+          // nothing, so just 404
+          $this->error(404, 'Page not found');
+      }
+    }    
   }
   
   /**
