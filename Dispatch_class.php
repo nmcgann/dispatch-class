@@ -47,6 +47,10 @@ function after(){
   
   return call_user_func_array(array(Dispatch::instance(),'after'),func_get_args());
 }
+function prefix(){
+  
+  return call_user_func_array(array(Dispatch::instance(),'prefix'),func_get_args());
+}
 function bind(){
   
   return call_user_func_array(array(Dispatch::instance(),'bind'),func_get_args());
@@ -1083,6 +1087,34 @@ class Dispatch extends Singleton {
   }
 
   /**
+   * Group all routes created within $cb under the $name prefix.
+   *
+   * @param string $name required. string to prepend to routes created in $cb
+   * @param callable $cb required. function containing route calls
+   *
+   * @return void
+   */
+  protected $prefix_paths = array();
+   
+  public function prefix($name = null, $cb = null) {
+  
+    //static $paths = array();
+  
+    // this is used by the system to get the current route
+    if (($nargs = func_num_args()) == 0)
+      return implode('/', $this->prefix_paths);
+  
+    // outside of sys calls, always require 2 params
+    if ($nargs < 2)
+      trigger_error("Invalid call to prefix()", E_USER_ERROR);
+  
+    // push, routine, pop so we can nest
+    array_push($this->prefix_paths, trim($name, '/'));
+    call_user_func($cb);
+    array_pop($this->prefix_paths);
+  }
+  
+  /**
    * Maps a callback or invokes a callback for requests
    * on $pattern. If $callback is not set, $pattern
    * is matched against all routes for $method, and the
@@ -1109,6 +1141,10 @@ class Dispatch extends Singleton {
   
     // a callback was passed, so we create a route definition
     if (is_callable($callback)) {
+      
+      // if we're inside a resouce, use the path
+      if (strlen($pref = $this->prefix()))
+        $path = trim("{$pref}/{$path}", '/');
   
       //add optional bracketed sections and "match anything" section
       $path = str_replace(array(')','*'), array(')?','.*?'), $path); 
