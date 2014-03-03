@@ -194,7 +194,19 @@ class Dispatch extends Singleton {
       //load up any other config items
       $this->config($config);
     }
+/*
+    //set error handlers
+    set_exception_handler(function($obj) { 
+
+      Dispatch::instance()->error($obj->getcode(),$obj->getmessage());
       
+    });
+    
+    set_error_handler(function($code,$text) {
+				if (error_reporting()) 
+					throw new ErrorException($text,$code);
+    });
+*/      
   }
     
   ///////////////////////////////////////////////////////////////////////////////
