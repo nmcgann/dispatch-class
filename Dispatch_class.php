@@ -1214,7 +1214,7 @@ class Dispatch extends Singleton {
         //adjust $values array to suit the number of args that the callback is expecting
         //padding is added to the array with null elements having numeric keys starting from zero.
         //stops error if optional args don't match the number of parameters.
-        $ref = new ReflectionFunction($callback);
+        $ref = new \ReflectionFunction($callback);
         $num_args_expected = $ref->getNumberOfParameters();
         //append filler array. (note: can't call array_fill with zero quantity - throws error)
         $values += (($diff = $num_args_expected - count($values)) > 0) ? array_fill(0,$diff,null) : array();
@@ -1386,7 +1386,7 @@ abstract class Singleton
     
     if (!isset(self::$instances[$c])) {
       $args = func_get_args();
-      $reflection_object = new ReflectionClass($c);
+      $reflection_object = new \ReflectionClass($c);
       self::$instances[$c] = $reflection_object->newInstanceArgs($args);
     }
     
