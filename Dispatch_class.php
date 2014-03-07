@@ -1227,11 +1227,11 @@ class Dispatch extends Singleton {
 
           if(!is_array($callback)) {
             //normal function or closure
-            $ref = new ReflectionFunction($callback);
+            $ref = new \ReflectionFunction($callback);
           }
           else {
             //class and method - further investigation required
-            $refclass = new ReflectionClass($callback[0]);
+            $refclass = new \ReflectionClass($callback[0]);
             //need to check if class can be instantiated to trap things like abstract classes 
             //(the check with is_callable() does not reject them)
             if ($refclass->isInstantiable()) {
@@ -1428,7 +1428,7 @@ abstract class Singleton
     
     if (!isset(self::$instances[$c])) {
       $args = func_get_args();
-      $reflection_object = new ReflectionClass($c);
+      $reflection_object = new \ReflectionClass($c);
       self::$instances[$c] = $reflection_object->newInstanceArgs($args);
     }
     
