@@ -2,3 +2,5 @@ cgi-bin
 tests/cookiejar.txt
 *.swp
 index.php
+views/
+config.ini
